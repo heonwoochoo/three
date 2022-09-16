@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-// 주제: 애니메이션 기본
+// 주제: 애니메이션 성능보정
 
 export default function example() {
   const canvas = document.querySelector("#three-canvas");
@@ -41,7 +41,7 @@ export default function example() {
 
   // 그리기
   const clock = new THREE.Clock(); // Clock 자체는 경과된 시간을 숫자값으로 가지고 있다.
-
+  console.log(clock);
   function draw() {
     const delta = clock.getDelta(); // 실행될때마다의 시간간격
     mesh.rotation.y += delta * 3;
