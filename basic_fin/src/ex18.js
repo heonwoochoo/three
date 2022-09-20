@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-// ----- 주제: Geometry 형태 조작하기
+// ----- 주제: Orbitcontrol
 
 export default function example() {
   // Renderer
@@ -22,8 +22,8 @@ export default function example() {
     0.1,
     1000
   );
-  camera.position.z = 10;
-  camera.position.y = 1;
+  camera.position.z = 5;
+  camera.position.y = 2;
   scene.add(camera);
   // Light
   const ambientLight = new THREE.AmbientLight("white", 0.5);
@@ -36,42 +36,38 @@ export default function example() {
 
   // Controls
   const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true; // 컨트롤 느낌을 좀 더 부드럽게해줌
+  // controls.enableZoom = false;
+  // controls.maxDistance = 10;
+  // controls.minDistance = 2;
+  // controls.minPolarAngle = THREE.MathUtils.degToRad(45);
+  // controls.maxPolarAngle = THREE.MathUtils.degToRad(135);
+  // controls.target.set(2, 2, 2); // 회전의 중심점을 타겟으로 정해줌
+  controls.autoRotate = true;
+  controls.autoRotateSpeed = 10;
 
   // Mesh
-  const geometry = new THREE.SphereGeometry(5, 64, 64);
-  const material = new THREE.MeshStandardMaterial({
-    color: "orangered",
-    side: THREE.DoubleSide,
-    flatShading: true,
-  });
-  const mesh = new THREE.Mesh(geometry, material);
-  scene.add(mesh);
-
-  // geometry.attributes.position -> 정점 버텍스들의 위치를 담고있음
-  // console.log(geometry.attributes.position.array);
-  const positionArray = geometry.attributes.position.array;
-  const randomArray = [];
-  for (let i = 0; i < positionArray.length; i += 3) {
-    // 정점(Vertex) 한개의 x,y,z 좌표를 랜덤으로 조정
-    positionArray[i] += (Math.random() - 0.5) * 0.2;
-    positionArray[i + 1] += (Math.random() - 0.5) * 0.2;
-    positionArray[i + 2] += (Math.random() - 0.5) * 0.2;
-
-    randomArray[i] = (Math.random() - 0.5) * 0.2;
-    randomArray[i + 1] = (Math.random() - 0.5) * 0.2;
-    randomArray[i + 2] = (Math.random() - 0.5) * 0.2;
+  const geometry = new THREE.BoxGeometry(1, 1, 1);
+  let mesh;
+  let material;
+  for (let i = 0; i < 20; i++) {
+    material = new THREE.MeshStandardMaterial({
+      color: `rgb(${50 + Math.floor(Math.random() * 205)},${
+        50 + Math.floor(Math.random() * 205)
+      },${50 + Math.floor(Math.random() * 205)})`,
+    });
+    mesh = new THREE.Mesh(geometry, material);
+    mesh.position.x = (Math.random() - 0.5) * 5;
+    mesh.position.y = (Math.random() - 0.5) * 5;
+    mesh.position.z = (Math.random() - 0.5) * 5;
+    scene.add(mesh);
   }
+
   // 그리기
   const clock = new THREE.Clock();
   function draw() {
     const time = clock.getElapsedTime() * 20;
-    for (let i = 0; i < positionArray.length; i += 3) {
-      positionArray[i] += Math.sin(time + randomArray[i] * 100) * 0.01;
-      positionArray[i + 1] += Math.sin(time + randomArray[i + 1] * 100) * 0.01;
-      positionArray[i + 2] += Math.sin(time + randomArray[i + 2] * 100) * 0.01;
-    }
-    // 변화값에 대한 업데이트를 true로 설정해야 변화가 보임
-    geometry.attributes.position.needsUpdate = true;
+    controls.update();
     renderer.render(scene, camera);
     renderer.setAnimationLoop(draw);
   }
