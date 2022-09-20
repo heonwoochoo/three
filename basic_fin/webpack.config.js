@@ -75,7 +75,6 @@ module.exports = {
         { from: "./src/main.css", to: "./main.css" },
         { from: "./src/texture", to: "./texture" },
         { from: "./src/mcstyle", to: "./mcstyle" },
-        // { from: "./src/sounds", to: "./sounds" }
       ],
     }),
   ],
