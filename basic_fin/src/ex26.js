@@ -2,7 +2,7 @@ import * as THREE from "three";
 import { Mesh } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
-// ----- 주제: MeshLambertMaterial, MeshPhongMaterial
+// ----- 주제: MeshPhongMaterial
 
 export default function example() {
   // Renderer
@@ -45,7 +45,7 @@ export default function example() {
   // MeshPhongMaterial: 하이라이트, 반사광 표현 가능
   const material2 = new THREE.MeshPhongMaterial({
     color: "orange",
-    shininess: 1000,
+    shininess: 1000, // 빛나는 정도?
   });
   const mesh1 = new Mesh(geometry, material1);
   mesh1.position.x = 1;

@@ -1,3 +1,3 @@
-import example from "./laycaster/ex48";
+import example from "./physics/ex50";
 
 example();

@@ -42,7 +42,7 @@ export default function example() {
     color: "green",
     roughness: 0,
     metalness: 0.1,
-    flatShading: true,
+    flatShading: true, // segment 선들이 보임
   });
   const material2 = new THREE.MeshPhongMaterial({
     color: "orange",
