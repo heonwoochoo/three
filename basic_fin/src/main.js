@@ -1,3 +1,3 @@
-import example from "./physics/ex52";
+import example from "./physics/ex53";
 
 example();
