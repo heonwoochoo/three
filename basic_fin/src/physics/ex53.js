@@ -142,14 +142,6 @@ export default function example() {
     renderer.render(scene, camera);
   }
 
-  function collide(e) {
-    const velocity = e.contact.getImpactVelocityAlongNormal(); // 충돌 속도
-    const sound1 = new Howl({
-      src: "/physics/boing.mp3",
-    });
-    if (velocity > 1) sound1.play();
-  }
-
   // Raycaster
   const raycaster = new THREE.Raycaster();
   const mouse = new THREE.Vector2();

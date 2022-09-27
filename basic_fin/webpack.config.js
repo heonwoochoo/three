@@ -76,6 +76,7 @@ module.exports = {
         { from: "./src/texture", to: "./texture" },
         { from: "./src/mcstyle", to: "./mcstyle" },
         { from: "./src/physics", to: "./physics" },
+        { from: "./src/particle", to: "./particle" },
       ],
     }),
   ],
