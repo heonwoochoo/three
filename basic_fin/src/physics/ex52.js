@@ -2,7 +2,11 @@ import dat from "dat.gui";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import * as CANNON from "cannon-es";
-// ----- 주제: canon.js 기본 세팅, 재질 설정
+import PreventDragClick from "../laycaster/preventDragClick";
+import { SphereGeometry } from "three";
+import MySphere from "./MySphere";
+import { Howl } from "howler";
+// ----- 주제: Performance(성능 좋게 하기)
 
 export default function example() {
   // Renderer
@@ -57,10 +61,12 @@ export default function example() {
   const cannonWorld = new CANNON.World();
   cannonWorld.gravity.set(0, -9.81, 0);
 
+  // 성능을 위한 세팅
+  cannonWorld.allowSleep = true; // body가 엄청 느려지면, 테스트 안함 (더이상 물리 엔진 적용이 필요없는 경우에만 사용)
+  cannonWorld.broadphase = new CANNON.SAPBroadphase(cannonWorld); // 퀄리티를 올려줌(거의 많이 사용한다고 함)
+
   // Contact Material
   const defaultMaterial = new CANNON.Material("default");
-  const rubberMaterial = new CANNON.Material("rubber");
-  const ironMaterial = new CANNON.Material("iron");
   // 기본값 설정
   const defaultContactMaterial = new CANNON.ContactMaterial(
     defaultMaterial,
@@ -71,26 +77,6 @@ export default function example() {
     }
   );
   cannonWorld.defaultContactMaterial = defaultContactMaterial;
-
-  const rubberDefaultContactMaterial = new CANNON.ContactMaterial(
-    rubberMaterial,
-    defaultMaterial,
-    {
-      friction: 0.5,
-      restitution: 0.7,
-    }
-  );
-  cannonWorld.addContactMaterial(rubberDefaultContactMaterial);
-
-  const ironDefaultContactMaterial = new CANNON.ContactMaterial(
-    ironMaterial,
-    defaultMaterial,
-    {
-      friction: 0.5,
-      restitution: 0,
-    }
-  );
-  cannonWorld.addContactMaterial(ironDefaultContactMaterial);
 
   const floorShape = new CANNON.Plane(); // 모양
   const floorBody = new CANNON.Body({
@@ -103,17 +89,6 @@ export default function example() {
   floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(-1, 0, 0), Math.PI / 2);
   cannonWorld.addBody(floorBody);
 
-  // CANNON에서의 박스는 중심에서부터 거리를 말한다.
-  // 기존 sphereMesh의 길이가 1,1,1 이므로 중심에서 거리는 0.5가 된다.
-  const sphereShape = new CANNON.Sphere(0.5);
-  const sphereBody = new CANNON.Body({
-    mass: 1,
-    position: new CANNON.Vec3(0, 10, 0),
-    shape: sphereShape,
-    material: ironMaterial,
-  });
-  cannonWorld.addBody(sphereBody);
-
   //Mesh
   const floorMesh = new THREE.Mesh( // 바닥생성
     new THREE.PlaneGeometry(10, 10),
@@ -122,15 +97,11 @@ export default function example() {
   floorMesh.rotation.x = -Math.PI / 2;
   floorMesh.receiveShadow = true;
   scene.add(floorMesh);
-
+  const spheres = [];
   const sphereGeometry = new THREE.SphereGeometry(0.5);
-  const sphereMaterial = new THREE.MeshBasicMaterial({
-    color: "green",
+  const sphereMaterial = new THREE.MeshStandardMaterial({
+    color: "seagreen",
   });
-  const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
-  sphereMesh.position.y = 0.5;
-  sphereMesh.castShadow = true;
-  scene.add(sphereMesh);
 
   // 그리기
   const clock = new THREE.Clock();
@@ -139,9 +110,10 @@ export default function example() {
     let cannonStepTime = 1 / 60;
     if (delta < 0.01) cannonStepTime = 1 / 120; // 컴퓨터에 따라 주사율이 달라서 보정값으로 바꿔줌
     cannonWorld.step(cannonStepTime, delta, 3); // 갱신하는 시간 단위
-    // cannonworld안 컴포넌트의 포지션을 그대로 복사해서 기존의 메쉬에 적용
-    sphereMesh.position.copy(sphereBody.position); // 위치
-    sphereMesh.quaternion.copy(sphereBody.quaternion); // 회전
+    spheres.forEach((item) => {
+      item.mesh.position.copy(item.cannonBody.position);
+      item.mesh.quaternion.copy(item.cannonBody.quaternion);
+    });
     renderer.render(scene, camera);
     renderer.setAnimationLoop(draw);
   }
@@ -153,8 +125,47 @@ export default function example() {
     renderer.render(scene, camera);
   }
 
+  function collide(e) {
+    const velocity = e.contact.getImpactVelocityAlongNormal(); // 충돌 속도
+    const sound1 = new Howl({
+      src: "/physics/boing.mp3",
+    });
+    if (velocity > 1) sound1.play();
+  }
+
   // 이벤트
   window.addEventListener("resize", setSize);
+  canvas.addEventListener("click", () => {
+    if (preventDragClick.mouseMoved) return;
+    const mySphere = new MySphere({
+      scene,
+      cannonWorld,
+      geometry: sphereGeometry,
+      material: sphereMaterial,
+      x: (Math.random() - 0.5) * 2,
+      y: Math.random() * 5 + 2,
+      z: (Math.random() - 0.5) * 2,
+      scale: Math.random() + 0.2,
+    });
+    spheres.push(mySphere);
+    mySphere.cannonBody.addEventListener("collide", collide);
+  });
+  const preventDragClick = new PreventDragClick(canvas);
+
+  // 삭제하기
+  const btn = document.createElement("button");
+  btn.style.cssText =
+    "position: absolute; left: 20px; top: 20px; font-size: 20px";
+  btn.innerHTML = "삭제";
+  document.body.append(btn);
+
+  btn.addEventListener("click", () => {
+    spheres.forEach((item) => {
+      item.cannonBody.removeEventListener("collide", collide);
+      cannonWorld.removeBody(item.cannonBody);
+      scene.remove(item.mesh);
+    });
+  });
 
   draw();
 }
